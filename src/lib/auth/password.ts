@@ -1,0 +1,17 @@
+import bcrypt from "bcryptjs";
+
+export {
+  checkPasswordStrength,
+  PASSWORD_RULES,
+  type PasswordCheck,
+} from "./password-policy";
+
+const BCRYPT_ROUNDS = 10;
+
+export function hashPassword(plain: string): Promise<string> {
+  return bcrypt.hash(plain, BCRYPT_ROUNDS);
+}
+
+export function verifyPassword(plain: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(plain, hash).catch(() => false);
+}

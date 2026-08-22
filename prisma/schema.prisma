@@ -1,0 +1,309 @@
+// Dayflow HRMS — data model
+//
+// Design notes
+// ------------
+// * SQLite is the datasource so the whole product runs offline from a single file.
+//   Prisma does not support native enums on SQLite, so status/role columns are
+//   strings that are validated at the edge by Zod and narrowed by the union types
+//   in `src/lib/domain/constants.ts`.
+// * Calendar days are stored as `YYYY-MM-DD` strings in the *organisation's*
+//   timezone (see OrgSetting.timezone). Absolute instants (check-in, decisions)
+//   are stored as DateTime. This keeps "which day does this attendance belong to"
+//   unambiguous regardless of the server or browser timezone.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String
+  role              String // ADMIN | HR | EMPLOYEE
+  emailVerified     Boolean   @default(false)
+  verificationToken String?   @unique
+  verifiedAt        DateTime?
+  lastLoginAt       DateTime?
+  failedAttempts    Int       @default(0)
+  lockedUntil       DateTime?
+  sessionVersion    Int       @default(1)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  employee      Employee?
+  notifications Notification[]
+
+  @@index([role])
+}
+
+model Department {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  code      String     @unique
+  headId    String?
+  employees Employee[]
+}
+
+model Employee {
+  id           String @id @default(cuid())
+  employeeCode String @unique
+  userId       String @unique
+
+  firstName     String
+  lastName      String
+  workEmail     String    @unique
+  personalEmail String?
+  phone         String?
+  address       String?
+  city          String?
+  country       String?
+  dateOfBirth   DateTime?
+  gender        String?
+  avatarColor   String    @default("indigo")
+
+  jobTitle       String
+  employmentType String // FULL_TIME | PART_TIME | CONTRACT | INTERN
+  status         String // ACTIVE | PROBATION | NOTICE_PERIOD | INACTIVE
+  departmentId   String?
+  managerId      String?
+  joinedAt       DateTime
+  exitedAt       DateTime?
+  location       String    @default("Bengaluru, IN")
+
+  // Expected working window in org-local time, "HH:mm".
+  shiftStart   String @default("09:30")
+  shiftEnd     String @default("18:30")
+  weeklyOffCsv String @default("0,6") // JS day indexes that are non-working
+
+  emergencyContactName  String?
+  emergencyContactPhone String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  manager    Employee?   @relation("EmployeeReports", fields: [managerId], references: [id], onDelete: SetNull)
+  reports    Employee[]  @relation("EmployeeReports")
+
+  attendance      Attendance[]
+  leaveRequests   LeaveRequest[]  @relation("LeaveRequester")
+  decidedLeaves   LeaveRequest[]  @relation("LeaveDecider")
+  leaveBalances   LeaveBalance[]
+  salaryStructure SalaryStructure?
+  payslips        Payslip[]
+  documents       Document[]
+
+  @@index([departmentId])
+  @@index([status])
+  @@index([managerId])
+}
+
+model Attendance {
+  id         String @id @default(cuid())
+  employeeId String
+  workDate   String // YYYY-MM-DD, org-local calendar day
+
+  checkInAt        DateTime?
+  checkOutAt       DateTime?
+  status           String // PRESENT | ABSENT | HALF_DAY | LEAVE | WEEK_OFF | HOLIDAY
+  workedMinutes    Int       @default(0)
+  lateMinutes      Int       @default(0)
+  earlyExitMinutes Int       @default(0)
+  source           String    @default("SELF") // SELF | HR_ADJUSTMENT | SYSTEM
+  note             String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, workDate])
+  @@index([workDate])
+  @@index([status])
+}
+
+model LeaveType {
+  id                String  @id @default(cuid())
+  code              String  @unique // PAID | SICK | UNPAID | CASUAL
+  name              String
+  tone              String  @default("indigo")
+  defaultAnnualDays Float
+  isPaid            Boolean @default(true)
+  requiresReason    Boolean @default(true)
+  sortOrder         Int     @default(0)
+
+  balances LeaveBalance[]
+  requests LeaveRequest[]
+}
+
+model LeaveBalance {
+  id           String @id @default(cuid())
+  employeeId   String
+  leaveTypeId  String
+  year         Int
+  entitledDays Float
+  usedDays     Float  @default(0)
+
+  employee  Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  leaveType LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, leaveTypeId, year])
+}
+
+model LeaveRequest {
+  id          String @id @default(cuid())
+  employeeId  String
+  leaveTypeId String
+
+  startDate   String // YYYY-MM-DD
+  endDate     String // YYYY-MM-DD
+  workingDays Float
+  halfDay     Boolean @default(false)
+  reason      String
+  status      String // PENDING | APPROVED | REJECTED | CANCELLED
+
+  decidedById     String?
+  decidedAt       DateTime?
+  decisionComment String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  employee  Employee  @relation("LeaveRequester", fields: [employeeId], references: [id], onDelete: Cascade)
+  decidedBy Employee? @relation("LeaveDecider", fields: [decidedById], references: [id], onDelete: SetNull)
+  leaveType LeaveType @relation(fields: [leaveTypeId], references: [id], onDelete: Restrict)
+
+  @@index([status])
+  @@index([employeeId, status])
+  @@index([startDate])
+}
+
+model SalaryStructure {
+  id         String @id @default(cuid())
+  employeeId String @unique
+
+  currency      String @default("INR")
+  effectiveFrom String // YYYY-MM-DD
+
+  // Monthly earning components
+  basic            Float
+  hra              Float
+  specialAllowance Float
+  transportAllow   Float
+  // Monthly deduction components
+  providentFund    Float
+  professionalTax  Float
+  healthInsurance  Float
+
+  revision      Int      @default(1)
+  updatedByName String?
+  updatedAt     DateTime @updatedAt
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+}
+
+model PayrollRun {
+  id          String    @id @default(cuid())
+  period      String    @unique // YYYY-MM
+  status      String // DRAFT | PROCESSED | PAID
+  processedAt DateTime?
+  processedBy String?
+  createdAt   DateTime  @default(now())
+
+  payslips Payslip[]
+}
+
+model Payslip {
+  id           String @id @default(cuid())
+  payrollRunId String
+  employeeId   String
+  period       String // YYYY-MM
+
+  totalEarnings   Float
+  totalDeductions Float
+  netPay          Float
+  lopDays         Float  @default(0)
+  paidDays        Float
+  breakdownJson   String // serialised PayslipLine[]
+
+  createdAt DateTime @default(now())
+
+  employee   Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  payrollRun PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, period])
+  @@index([period])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String // LEAVE_SUBMITTED | LEAVE_APPROVED | LEAVE_REJECTED | PAYSLIP_READY | PROFILE_UPDATED | SALARY_UPDATED | ATTENDANCE_MISSING | ANNOUNCEMENT
+  title     String
+  body      String
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}
+
+model Document {
+  id           String   @id @default(cuid())
+  employeeId   String
+  name         String
+  category     String // CONTRACT | ID_PROOF | CERTIFICATE | POLICY | OTHER
+  mimeType     String
+  sizeBytes    Int
+  storageKey   String? // relative path under ./storage, null for seeded placeholders
+  confidential Boolean  @default(false)
+  uploadedBy   String
+  uploadedAt   DateTime @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+}
+
+model AuditEvent {
+  id          String   @id @default(cuid())
+  actorUserId String?
+  actorName   String
+  employeeId  String?
+  action      String
+  entityType  String
+  entityId    String?
+  summary     String
+  metaJson    String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([employeeId])
+}
+
+model Holiday {
+  id       String  @id @default(cuid())
+  date     String  @unique // YYYY-MM-DD
+  name     String
+  optional Boolean @default(false)
+}
+
+model OrgSetting {
+  id                  String   @id @default("org")
+  companyName         String   @default("Dayflow")
+  legalName           String   @default("Dayflow Technologies Pvt. Ltd.")
+  timezone            String   @default("Asia/Kolkata")
+  currency            String   @default("INR")
+  standardWorkMinutes Int      @default(510) // 8h30m
+  halfDayMinutes      Int      @default(240)
+  lateGraceMinutes    Int      @default(10)
+  payrollDayOfMonth   Int      @default(28)
+  updatedAt           DateTime @updatedAt
+}

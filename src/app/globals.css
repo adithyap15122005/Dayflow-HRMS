@@ -1,0 +1,249 @@
+@import "tailwindcss";
+
+/* ==========================================================================
+   Dayflow design system
+   --------------------------------------------------------------------------
+   One coherent visual language for the whole product. Every colour, radius,
+   shadow and motion value used anywhere in the app is declared here as a token,
+   so screens cannot drift apart.
+
+   Fonts are a curated system stack rather than a web font: it renders instantly,
+   needs no network at build or runtime (a hard requirement for offline demos),
+   and resolves to Segoe UI Variable on Windows and SF Pro on macOS.
+   ========================================================================== */
+
+@theme {
+  --font-sans:
+    ui-sans-serif, "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  --font-display:
+    ui-sans-serif, "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, "Cascadia Mono", "Segoe UI Mono", "SF Mono", Menlo, Consolas, monospace;
+
+  /* ---- surfaces ------------------------------------------------------- */
+  --color-canvas: #f4f5f8;
+  --color-surface: #ffffff;
+  --color-surface-2: #fafbfc;
+  --color-surface-3: #f1f3f7;
+  --color-sidebar: #101527;
+  --color-sidebar-2: #171d33;
+
+  /* ---- ink ------------------------------------------------------------ */
+  --color-ink: #0b1220;
+  --color-ink-2: #3d475c;
+  --color-ink-3: #667085;
+  --color-ink-4: #98a2b3;
+  --color-ink-invert: #f8fafc;
+
+  /* ---- lines ---------------------------------------------------------- */
+  --color-line: #e6e9ef;
+  --color-line-2: #d3d8e2;
+  --color-line-strong: #b9c0cf;
+
+  /* ---- brand ---------------------------------------------------------- */
+  --color-brand: #4c5fd5;
+  --color-brand-hover: #3f50ba;
+  --color-brand-active: #35449e;
+  --color-brand-soft: #eef0fd;
+  --color-brand-soft2: #dfe3fb;
+  --color-brand-ink: #2c3894;
+
+  /* ---- semantic ------------------------------------------------------- */
+  --color-success: #12855a;
+  --color-success-soft: #e6f5ee;
+  --color-success-ink: #0a5c3e;
+  --color-warning: #b45309;
+  --color-warning-soft: #fdf3e7;
+  --color-warning-ink: #8a3f06;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdeceb;
+  --color-danger-ink: #8f1c13;
+  --color-info: #175cd3;
+  --color-info-soft: #eaf1fd;
+  --color-info-ink: #12489f;
+  --color-neutral-soft: #f1f3f7;
+  --color-neutral-ink: #475467;
+
+  /* ---- charts: exactly five roles, each mapped to a meaning ----------- */
+  --color-chart-present: #4c5fd5;
+  --color-chart-absent: #b42318;
+  --color-chart-leave: #b45309;
+  --color-chart-late: #8e9bee;
+  --color-chart-neutral: #98a2b3;
+
+  /* ---- avatar / category tones ---------------------------------------- */
+  --color-tone-indigo: #4c5fd5;
+  --color-tone-violet: #7a4fd5;
+  --color-tone-teal: #0e8f8f;
+  --color-tone-amber: #b07206;
+  --color-tone-rose: #c0355f;
+  --color-tone-sky: #0b74c4;
+  --color-tone-emerald: #12855a;
+  --color-tone-slate: #556070;
+
+  /* ---- radii ---------------------------------------------------------- */
+  --radius-xs: 0.25rem;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+
+  /* ---- elevation: three levels only ---------------------------------- */
+  --shadow-e1: 0 1px 2px 0 rgb(16 21 39 / 0.04), 0 1px 3px 0 rgb(16 21 39 / 0.06);
+  --shadow-e2: 0 2px 4px -1px rgb(16 21 39 / 0.05), 0 8px 16px -4px rgb(16 21 39 / 0.08);
+  --shadow-e3: 0 8px 12px -4px rgb(16 21 39 / 0.08), 0 24px 48px -12px rgb(16 21 39 / 0.18);
+
+  /* ---- motion --------------------------------------------------------- */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-fade-in: fade-in 0.18s var(--ease-out-soft) both;
+  --animate-rise: rise 0.24s var(--ease-out-soft) both;
+  --animate-pop: pop 0.16s var(--ease-out-soft) both;
+  --animate-shimmer: shimmer 1.4s linear infinite;
+  --animate-live: live 2s ease-out infinite;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes shimmer {
+  from { background-position: -160% 0; }
+  to { background-position: 160% 0; }
+}
+@keyframes live {
+  0% { box-shadow: 0 0 0 0 rgb(18 133 90 / 0.45); }
+  70% { box-shadow: 0 0 0 6px rgb(18 133 90 / 0); }
+  100% { box-shadow: 0 0 0 0 rgb(18 133 90 / 0); }
+}
+
+/* ========================================================================== */
+
+@layer base {
+  :root {
+    color-scheme: light;
+    /* Numbers must line up in every table, stat and payslip. */
+    font-variant-numeric: tabular-nums;
+    --shell-topbar-h: 3.75rem;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    letter-spacing: -0.006em;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    color: var(--color-ink);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  /* One consistent focus treatment everywhere. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  ::selection {
+    background: var(--color-brand-soft2);
+    color: var(--color-brand-ink);
+  }
+
+  ::placeholder {
+    color: var(--color-ink-4);
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-thumb {
+    background: var(--color-line-2);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--color-line-strong);
+    background-clip: content-box;
+  }
+
+  input, textarea, select, button { font: inherit; }
+
+  input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.5; }
+  input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+}
+
+@layer utilities {
+  .skeleton {
+    background-image: linear-gradient(
+      90deg,
+      var(--color-surface-3) 8%,
+      #e9ecf2 22%,
+      var(--color-surface-3) 36%
+    );
+    background-size: 220% 100%;
+    animation: var(--animate-shimmer);
+  }
+
+  /* Fades the right edge of horizontally scrollable tables on small screens. */
+  .scroll-fade-x {
+    mask-image: linear-gradient(to right, #000 0, #000 calc(100% - 1.25rem), transparent 100%);
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+}
+
+/* Respect reduced-motion for every animation in the system. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Payslips and reports are printed straight from the browser. */
+@media print {
+  @page { margin: 14mm; }
+  body { background: #fff; }
+  .no-print { display: none !important; }
+  .print-plain {
+    box-shadow: none !important;
+    border-color: #cbd2df !important;
+  }
+  .print-full {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+}
