@@ -1,17 +1,51 @@
-# Dayflow
+<div align="center">
 
-**The intelligent workforce operations hub.** Every workday, perfectly aligned.
+# Dayflow HRMS
 
-Dayflow is a Human Resource Management System that unifies the things an HR team
-actually opens a tool for: who is in today, what needs a decision, whether leave is
-piling up, and what payroll will cost. It ships with a live attention queue that
-tells HR *what* needs action and *which rule* said so, and a plain-English query
-layer that answers questions straight from the database.
+### The workforce operations platform that turns HR data into clear action
 
-```
-Employee →  "I can understand my workday in seconds."
-HR       →  "I can understand the workforce in seconds."
-```
+[![Live Demo](https://img.shields.io/badge/Live_Demo-AWS-FF9900?style=for-the-badge&logo=amazonwebservices&logoColor=white)](https://13-205-86-226.sslip.io)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tests](https://img.shields.io/badge/Tests-141_Passing-1F8A70?style=for-the-badge)](#testing)
+
+**People · Attendance · Leave · Payroll · Reports · Notifications**
+
+[Launch the live application](https://13-205-86-226.sslip.io) · [Explore features](#what-is-implemented) · [Run locally](#quick-start) · [Review in four minutes](#recommended-review-path-about-four-minutes)
+
+</div>
+
+---
+
+Dayflow is a production-ready Human Resource Management System built around one
+simple idea: an HR dashboard should tell a team what needs attention, why it
+matters, and what action to take next. It brings employee records, daily
+attendance, leave decisions, payroll, reporting, notifications and role-based
+workflows into one coherent application.
+
+> **Employee:** “I can understand my workday in seconds.”<br>
+> **HR:** “I can understand the workforce in seconds.”
+
+## Hackathon highlights
+
+| What judges can evaluate | What Dayflow demonstrates |
+| --- | --- |
+| **A complete product** | Nine authenticated screens, 23 API routes and real workflows—not disconnected mock-ups |
+| **Explainable decisions** | Every attention item exposes the exact business rule and source data behind it |
+| **Role-aware UX** | Administrator, HR and employee experiences share one product while enforcing different permissions |
+| **Workflow integrity** | Leave approval updates balances and attendance atomically; payroll derives loss of pay from attendance |
+| **Engineering quality** | Strict TypeScript, server-side authorization, pure business rules and 141 passing unit tests |
+| **Deployment readiness** | Public HTTPS deployment on AWS with a reproducible local setup and deterministic demo data |
+
+## Live demo
+
+The latest verified build is deployed on AWS:
+
+### [https://13-205-86-226.sslip.io](https://13-205-86-226.sslip.io)
+
+Use the one-click demo roles on the sign-in page to experience the same workflow
+as an administrator, HR officer or employee. The deployment uses seeded showcase
+data, so judges can safely explore approvals, attendance, reports and payroll.
 
 ---
 
@@ -148,7 +182,7 @@ Three deliberate choices worth calling out:
 
 - **Business rules are pure functions.** `src/lib/domain/rules.ts` has no imports
   from Prisma and never reads the clock: services pass in the facts, the rules
-  decide. That is why 140 unit tests can cover leave validation, attendance
+  decide. That is why 141 unit tests can cover leave validation, attendance
   transitions, payroll pro-rating and the attention engine without a database.
 - **One timezone, one date type.** A calendar day is a `YYYY-MM-DD` string in the
   organisation's timezone; an instant is a `DateTime`. Attendance can never drift
@@ -243,7 +277,7 @@ HR cannot process payroll or change the work policy.
 
 ```bash
 npm run verify   # typecheck + lint + unit tests
-npm test         # 140 unit tests
+npm test         # 141 unit tests
 npm run build    # production build
 npm run smoke    # 88 end-to-end HTTP assertions (needs npm run dev)
 bash scripts/audit-pages.sh   # renders 56 screen/role combinations
@@ -251,11 +285,11 @@ bash scripts/audit-pages.sh   # renders 56 screen/role combinations
 
 | Layer | What it covers |
 | --- | --- |
-| **Unit** (140 tests, Vitest) | Timezone and calendar arithmetic incl. DST; access decisions per role; attendance transitions and status boundaries; leave validation (inverted ranges, half-day rules, overlaps, insufficient balance); payroll pro-rating, LOP clamping and zero-payable-day months; salary guard rails; the attention engine; the password policy. Plus a regression file for four edge cases found during review. |
+| **Unit** (141 tests, Vitest) | Timezone and calendar arithmetic incl. DST; access decisions per role; attendance transitions and status boundaries; leave validation (inverted ranges, half-day rules, overlaps, insufficient balance); payroll pro-rating, LOP clamping and zero-payable-day months; salary guard rails; the attention engine; the password policy. Plus regression coverage for edge cases found during review. |
 | **End-to-end** (88 assertions) | The real HTTP API driven the way the UI drives it: auth, RBAC boundaries, the full attendance state machine, the leave workflow through to attendance being written, the payroll state machine including its locks, notifications, search, CSV export, the assistant, and session revocation. |
 | **Rendered pages** (56 combinations) | Every screen fetched as every role, checked for `NaN`, `undefined`, `Invalid Date`, `[object Object]`, streaming errors, a required content marker, and absence of management-only surfaces from employee pages. |
 
-Status at the last run: typecheck clean, lint clean (0 problems), 140/140 unit
+Status at the last run: typecheck clean, lint clean (0 problems), 141/141 unit
 tests, 88/88 end-to-end, 56/56 page audit, production build succeeds.
 
 ---
@@ -322,6 +356,34 @@ Honest list, all deliberate scope calls rather than oversights:
 
 ---
 
+## AWS deployment
+
+The public demo runs as a cost-conscious single-node deployment on AWS Lightsail
+in the Mumbai region. Caddy terminates HTTPS and forwards traffic to the Next.js
+service, while systemd keeps the application available after restarts. The SQLite
+database is stored on the instance and remains separate from application releases.
+
+```text
+Browser
+   │ HTTPS
+   ▼
+Caddy reverse proxy
+   │ localhost:3000
+   ▼
+Next.js production service
+   │
+   ▼
+Prisma + persistent SQLite database
+```
+
+This architecture keeps the hackathon deployment inexpensive and easy to operate.
+For horizontal scaling, the application can move to PostgreSQL and external
+session/rate-limit storage without changing its domain or service boundaries.
+
+**Production URL:** [https://13-205-86-226.sslip.io](https://13-205-86-226.sslip.io)
+
+---
+
 ## Environment
 
 | Variable | Purpose |
@@ -332,3 +394,13 @@ Honest list, all deliberate scope calls rather than oversights:
 | `DEV_SHOW_VERIFICATION_LINK` | Prints the sign-up verification link to the console |
 
 See [`.env.example`](.env.example).
+
+---
+
+<div align="center">
+
+Built to make every workday clear, accountable and actionable.
+
+**[Open Dayflow](https://13-205-86-226.sslip.io)**
+
+</div>
