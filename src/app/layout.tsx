@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
 
 import { ToastProvider } from "@/components/ui/toast";
 
@@ -22,7 +23,7 @@ export const viewport: Viewport = {
   themeColor: "#101527",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="h-full antialiased">
       <body className="flex min-h-full flex-col">

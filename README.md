@@ -114,11 +114,10 @@ the queue trustworthy enough to work from every morning.
 
 ### Ask Dayflow
 
-A deterministic natural-language layer, **not** a language model. A question is
-matched against a fixed set of intents; the matched intent runs an ordinary Prisma
-query and the answer is assembled from those rows. The panel prints the tables it
-read, so every figure is auditable. It works offline, needs no API key, and cannot
-hallucinate an HR fact because it never generates one. Answers are role-scoped: an
+A deterministic natural-language search. A question is matched against a fixed
+set of intents; the matched intent runs an ordinary Prisma query and the answer is
+assembled from those rows. The panel prints the tables it read, so every figure is
+auditable. It works offline and needs no external service. Answers are role-scoped: an
 employee asking "how many leave requests are pending?" is told the question cannot
 be verified for them.
 

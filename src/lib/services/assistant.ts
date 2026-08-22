@@ -25,13 +25,12 @@ import { getPayrollOverview } from "./payroll";
 /**
  * "Ask Dayflow" — a deterministic natural-language query layer.
  *
- * This is intentionally *not* a language model. A question is matched against a
- * fixed set of intents; the matched intent then runs an ordinary database query
- * and the reply is assembled from those rows. That means:
+ * A question is matched against a fixed set of intents; the matched intent then
+ * runs an ordinary database query and the reply is assembled from those rows.
+ * That means:
  *
  *   - every figure shown is traceable to a table (reported in `sources`)
- *   - the feature works with no network access and no API key
- *   - it cannot hallucinate an HR fact, because it never generates one
+ *   - the feature works with no network access or external service
  *
  * Answers are scoped by the caller's role: an employee can only ask about
  * themselves and non-sensitive team facts.
