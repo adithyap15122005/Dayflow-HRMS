@@ -20,6 +20,14 @@
 > **[OPEN DAYFLOW HRMS ON AWS →](https://13-205-86-226.sslip.io)**<br>
 > **Public HTTPS deployment · Ready for evaluator access**
 
+## Project Lead & Repository Overview
+
+- **Project Lead & Maintainer:** [@adithyap15122005](https://github.com/adithyap15122005)
+- **GitHub Repository:** [https://github.com/adithyap15122005/Dayflow-HRMS](https://github.com/adithyap15122005/Dayflow-HRMS)
+- **AWS Live Deployment:** [https://13-205-86-226.sslip.io](https://13-205-86-226.sslip.io)
+- **Stack & Features:** Next.js 16, TypeScript, Prisma SQLite, strict server-side RBAC, and real-time HR operations
+- **Built for:** Hackathon showcase & enterprise workforce operations automation
+
 ---
 
 Dayflow is a production-ready Human Resource Management System built around one
