@@ -561,8 +561,17 @@ export function annualCtc(c: SalaryComponents): number {
 export function validateSalaryStructure(
   c: SalaryComponents,
 ): { ok: true } | { ok: false; message: string; field?: string } {
-  const entries = Object.entries(c) as [keyof SalaryComponents, number][];
-  for (const [key, value] of entries) {
+  const componentKeys: (keyof SalaryComponents)[] = [
+    "basic",
+    "hra",
+    "specialAllowance",
+    "transportAllow",
+    "providentFund",
+    "professionalTax",
+    "healthInsurance",
+  ];
+  for (const key of componentKeys) {
+    const value = c[key];
     if (!Number.isFinite(value) || value < 0) {
       return { ok: false, message: "Every salary component must be zero or more.", field: key };
     }

@@ -726,6 +726,11 @@ describe("validateSalaryStructure", () => {
     expect(validateSalaryStructure(components)).toEqual({ ok: true });
   });
 
+  it("ignores non-component fields supplied by the salary request", () => {
+    const request = { ...components, effectiveFrom: "2026-08-20" };
+    expect(validateSalaryStructure(request)).toEqual({ ok: true });
+  });
+
   it("rejects a negative or non-finite component", () => {
     const negative = fail(validateSalaryStructure({ ...components, transportAllow: -1 }));
     expect(negative.message).toBe("Every salary component must be zero or more.");
