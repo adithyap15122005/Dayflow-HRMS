@@ -45,24 +45,29 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
   const [loading, setLoading] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // Keep in step when the server re-renders with a new count. Adjusting state
+  // during render is the documented alternative to a prop-syncing effect.
+  const [seenUnread, setSeenUnread] = useState(initialUnread);
+  if (seenUnread !== initialUnread) {
+    setSeenUnread(initialUnread);
     setUnread(initialUnread);
-  }, [initialUnread]);
+  }
 
-  useEffect(() => {
-    if (!open) return;
+  /** Loading the list is a response to a click, so it belongs in the handler. */
+  function togglePanel() {
+    const next = !open;
+    setOpen(next);
+    if (!next) return;
     setLoading(true);
     void api
-      .get<{ notifications: NotificationRow[]; unread: number }>(
-        "/api/notifications?take=8",
-      )
+      .get<{ notifications: NotificationRow[]; unread: number }>("/api/notifications?take=8")
       .then((data) => {
         setRows(data.notifications);
         setUnread(data.unread);
       })
       .catch(() => setRows([]))
       .finally(() => setLoading(false));
-  }, [open]);
+  }
 
   useEffect(() => {
     if (!open) return;
@@ -99,7 +104,7 @@ export function NotificationBell({ initialUnread }: { initialUnread: number }) {
     <div className="relative" ref={panelRef}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={togglePanel}
         aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
         aria-expanded={open}
         className={cn(

@@ -305,7 +305,7 @@ export function CommandCentreView({
                   unit="%"
                   tone="absent"
                   height={200}
-                  formatValue={(value) => `${value}% of expected days`}
+                  valueLabel="of expected days"
                 />
                 <p className="mt-1 text-[0.75rem] text-ink-3">
                   Unexcused absence as a share of expected working days. Approved leave is
@@ -341,7 +341,7 @@ export function CommandCentreView({
               valueKey="count"
               tone="present"
               height={200}
-              formatValue={(value) => `${value} people`}
+              valueLabel="people"
             />
             <ul className="mt-3 flex flex-wrap gap-1.5">
               {headcount.byStatus.map((item) => (

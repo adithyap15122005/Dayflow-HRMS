@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
 
 /**
- * Edge gate.
+ * Edge gate — Next.js `proxy` convention (the successor to `middleware`).
  *
  * This is a *fast* first line only: it verifies the session JWT's signature and
  * expiry so unauthenticated visitors are redirected before any page renders.
@@ -13,9 +13,14 @@ import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
  */
 
 const PUBLIC_PATHS = ["/sign-in", "/sign-up", "/verify"];
-const PUBLIC_API = ["/api/auth/sign-in", "/api/auth/sign-up", "/api/auth/verify", "/api/auth/session"];
+const PUBLIC_API = [
+  "/api/auth/sign-in",
+  "/api/auth/sign-up",
+  "/api/auth/verify",
+  "/api/auth/session",
+];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   const isPublicPage = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -25,7 +30,15 @@ export async function middleware(request: NextRequest) {
   if (isPublicApi) return NextResponse.next();
 
   if (isPublicPage) {
-    // Already signed in: skip the sign-in screen entirely.
+    // A token can verify at the edge yet be rejected by the app (revoked after
+    // sign-out, deactivated account, changed role) because only the app reads the
+    // database. When the app bounces such a visitor here it appends ?expired, and
+    // we drop the cookie so they land on sign-in instead of looping.
+    if (claims && request.nextUrl.searchParams.has("expired")) {
+      const response = NextResponse.next();
+      response.cookies.delete(SESSION_COOKIE);
+      return response;
+    }
     if (claims) {
       return NextResponse.redirect(new URL("/overview", request.url));
     }

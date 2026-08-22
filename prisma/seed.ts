@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 /**
  * Deterministic demo seed.
  *
@@ -31,7 +30,6 @@ import {
 import {
   computePayslip,
   deriveCompletedStatus,
-  grossMonthly,
   lateMinutesFor,
   type SalaryComponents,
 } from "../src/lib/domain/rules";

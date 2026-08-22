@@ -39,7 +39,10 @@ export function canViewEmployee(actor: Actor, employeeId: string): boolean {
 
 /**
  * May the actor read salary/payslip data for this employee?
- * Stricter than `canViewEmployee`: an employee sees only their own money.
+ *
+ * Same shape as `canViewEmployee` today, but kept as its own rule because
+ * compensation is the field most likely to need a narrower policy later (e.g.
+ * excluding a line manager who can otherwise see the record).
  */
 export function canViewCompensation(actor: Actor, employeeId: string): boolean {
   return isManagement(actor.role) || actor.employeeId === employeeId;
@@ -145,11 +148,19 @@ export const DEFAULT_WORK_POLICY: WorkPolicy = {
   lateGraceMinutes: 10,
 };
 
+/**
+ * Parse a weekly-off CSV such as "0,6" into day indexes.
+ *
+ * Empty and non-numeric tokens are dropped rather than coerced — `Number("")` is
+ * 0, so a naive parse would silently make Sunday a weekly off for an employee
+ * whose CSV is blank or has a trailing comma.
+ */
 export function parseWeeklyOff(csv: string): number[] {
   return csv
     .split(",")
-    .map((v) => Number(v.trim()))
-    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
+    .map((token) => token.trim())
+    .filter((token) => /^[0-6]$/.test(token))
+    .map(Number);
 }
 
 export function isWeeklyOff(date: WorkDate, weeklyOffCsv: string): boolean {
@@ -283,7 +294,13 @@ export type LeaveValidationResult =
   | { ok: true; workingDays: number; dates: WorkDate[] }
   | { ok: false; message: string; field?: string; hint?: string };
 
-/** Working days inside a window, excluding weekly offs and public holidays. */
+/**
+ * Working days inside a window, excluding weekly offs and public holidays.
+ *
+ * A half day only costs 0.5 when the selected date is actually a working day —
+ * otherwise the window costs nothing, which keeps the form preview honest for a
+ * half day requested on a holiday.
+ */
 export function countLeaveWorkingDays(
   window: LeaveWindow,
   weeklyOffCsv: string,
@@ -292,8 +309,8 @@ export function countLeaveWorkingDays(
   const dates = eachWorkDate(window.startDate, window.endDate).filter(
     (d) => !isWeeklyOff(d, weeklyOffCsv) && !holidays.has(d),
   );
-  const workingDays = window.halfDay ? 0.5 : dates.length;
-  return { workingDays, dates };
+  if (dates.length === 0) return { workingDays: 0, dates };
+  return { workingDays: window.halfDay ? 0.5 : dates.length, dates };
 }
 
 const overlaps = (
@@ -430,25 +447,51 @@ export type PayslipComputation = {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
+/** Shape of an all-zero payslip, used when a period has no payable days. */
+const ZERO_LINES: PayslipLine[] = [
+  { key: "basic", label: "Basic salary", kind: "EARNING", amount: 0 },
+  { key: "hra", label: "House rent allowance", kind: "EARNING", amount: 0 },
+  { key: "specialAllowance", label: "Special allowance", kind: "EARNING", amount: 0 },
+  { key: "transportAllow", label: "Transport allowance", kind: "EARNING", amount: 0 },
+  { key: "providentFund", label: "Provident fund", kind: "DEDUCTION", amount: 0 },
+  { key: "professionalTax", label: "Professional tax", kind: "DEDUCTION", amount: 0 },
+  { key: "healthInsurance", label: "Health insurance", kind: "DEDUCTION", amount: 0 },
+];
+
 /**
  * Compute a payslip from the salary structure and the month's attendance.
  *
  * Loss of pay is pro-rated on *payable* days (calendar days minus week-offs and
  * holidays), which is how an Indian monthly payroll usually works, so the number
  * on screen can always be explained back to the attendance table.
+ *
+ * A period with no payable days at all produces a zero payslip rather than a full
+ * one: paying 100% for a month nobody could work would be the wrong default, and
+ * charging deductions against zero earnings would produce a negative net.
  */
 export function computePayslip(input: {
   components: SalaryComponents;
   payableDays: number;
   unpaidAbsenceDays: number;
 }): PayslipComputation {
-  const { components, payableDays } = input;
-  const lopDays = Math.min(
-    Math.max(0, round2(input.unpaidAbsenceDays)),
-    payableDays,
-  );
+  const { components } = input;
+  const payableDays = Math.max(0, input.payableDays);
+
+  if (payableDays === 0) {
+    return {
+      lines: ZERO_LINES.map((line) => ({ ...line })),
+      totalEarnings: 0,
+      totalDeductions: 0,
+      netPay: 0,
+      lopDays: 0,
+      paidDays: 0,
+      payableDays: 0,
+    };
+  }
+
+  const lopDays = Math.min(Math.max(0, round2(input.unpaidAbsenceDays)), payableDays);
   const paidDays = round2(payableDays - lopDays);
-  const ratio = payableDays > 0 ? paidDays / payableDays : 1;
+  const ratio = paidDays / payableDays;
 
   const earnings: PayslipLine[] = [
     { key: "basic", label: "Basic salary", kind: "EARNING", amount: round2(components.basic * ratio) },

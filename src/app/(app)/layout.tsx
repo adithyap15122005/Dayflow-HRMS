@@ -17,8 +17,10 @@ import { getOrgContext } from "@/lib/services/org";
  */
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const user = await getCurrentUser();
-  if (!user) redirect("/sign-in");
-  if (!user.emailVerified) redirect("/sign-in?unverified=1");
+  // `?expired` tells the proxy to drop the stale cookie, so a revoked or
+  // deactivated token cannot bounce between here and the sign-in screen.
+  if (!user) redirect("/sign-in?expired=1");
+  if (!user.emailVerified) redirect("/sign-in?expired=1&unverified=1");
 
   const management = isManagement(user.role);
   const org = await getOrgContext();

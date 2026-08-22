@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { clearSession, establishSession } from "@/lib/auth/guard";
+import { establishSession, signOutCurrent } from "@/lib/auth/guard";
 import { verifyPassword } from "@/lib/auth/password";
 import { prisma } from "@/lib/db";
 import type { Role } from "@/lib/domain/constants";
@@ -122,8 +122,8 @@ export const POST = route(async (request: Request) => {
   });
 });
 
-/** Sign out is a POST so it cannot be triggered by a stray link or prefetch. */
+/** Convenience alias for sign-out on the same resource. */
 export const DELETE = route(async () => {
-  await clearSession();
+  await signOutCurrent();
   return jsonOk({ ok: true });
 });

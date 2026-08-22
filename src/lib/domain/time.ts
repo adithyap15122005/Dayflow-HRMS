@@ -166,17 +166,23 @@ export function diffWorkDays(a: WorkDate, b: WorkDate): number {
   );
 }
 
-/** Every calendar day from `start` to `end`, inclusive. Capped for safety. */
+/**
+ * Every calendar day from `start` to `end`, inclusive.
+ *
+ * An inverted range yields an empty array rather than a single day, so callers
+ * cannot silently act on a backwards window. `cap` bounds the worst case.
+ */
 export function eachWorkDate(
   start: WorkDate,
   end: WorkDate,
   cap = 800,
 ): WorkDate[] {
+  if (diffWorkDays(start, end) < 0) return [];
   const out: WorkDate[] = [];
   let cursor = start;
   while (out.length < cap) {
     out.push(cursor);
-    if (cursor === end || diffWorkDays(cursor, end) <= 0) break;
+    if (cursor >= end) break;
     cursor = addWorkDays(cursor, 1);
   }
   return out;

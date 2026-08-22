@@ -364,13 +364,15 @@ const INTENTS: Intent[] = [
       return {
         intent: "my-leave-balance",
         headline: capped.length
-          ? `You have ${capped.map((b) => `${formatDays(b.remainingDays)} of ${b.name.toLowerCase()}`).join(", ")} remaining.`
+          ? `You have ${capped
+              .map((b) => `${formatDays(b.remainingDays ?? 0)} of ${b.name.toLowerCase()}`)
+              .join(", ")} remaining.`
           : "No capped leave types are configured for you.",
         detail: "Pending requests are already deducted from these figures.",
         metrics: capped.map((b) => ({
           label: b.name,
-          value: `${b.remainingDays} / ${b.cap}`,
-          tone: b.remainingDays <= 1 ? "warning" : "default",
+          value: `${b.remainingDays ?? 0} / ${b.cap}`,
+          tone: (b.remainingDays ?? 0) <= 1 ? "warning" : "default",
         })),
         people: [],
         sources: ["LeaveBalance", "LeaveRequest", "LeaveType"],

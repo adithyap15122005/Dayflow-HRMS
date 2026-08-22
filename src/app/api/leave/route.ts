@@ -1,5 +1,5 @@
 import { requireActor } from "@/lib/auth/guard";
-import { isManagement, type LeaveStatus } from "@/lib/domain/constants";
+import { type LeaveStatus } from "@/lib/domain/constants";
 import { jsonCreated, jsonOk, readJson, route } from "@/lib/http";
 import { listLeaveRequests, submitLeaveRequest } from "@/lib/services/leave";
 import { leaveQuerySchema, leaveRequestSchema } from "@/lib/validation";
@@ -9,13 +9,11 @@ export const GET = route(async (request: Request) => {
   const url = new URL(request.url);
   const query = leaveQuerySchema.parse(Object.fromEntries(url.searchParams));
 
-  // An employee is silently pinned to their own scope by the service; asking for
-  // "org" without the role throws instead of leaking.
-  const scope = query.scope === "org" && !isManagement(actor.role) ? "me" : query.scope;
-
+  // Asking for organisation scope without the role is refused rather than
+  // silently narrowed: failing loudly is the honest signal, and a caller that
+  // wanted their own list can ask for it explicitly.
   const requests = await listLeaveRequests(actor, {
     ...query,
-    scope,
     status: query.status as LeaveStatus | undefined,
   });
   return jsonOk({ requests });

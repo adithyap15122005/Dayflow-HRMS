@@ -131,7 +131,12 @@ export function TFootRow({ children }: { children: ReactNode }) {
   );
 }
 
-/** Column header that also acts as a sort control. */
+/**
+ * Column header that also acts as a sort control.
+ *
+ * The sort state is announced through the accessible name rather than `aria-sort`,
+ * because `aria-sort` belongs on the `columnheader`, not on a link inside it.
+ */
 export function SortHeader({
   label,
   active,
@@ -145,10 +150,15 @@ export function SortHeader({
   href: string;
   align?: "left" | "right";
 }) {
+  const next = active && direction === "asc" ? "descending" : "ascending";
   return (
     <a
       href={href}
-      aria-sort={active ? (direction === "asc" ? "ascending" : "descending") : "none"}
+      aria-label={
+        active
+          ? `${label}, sorted ${direction === "asc" ? "ascending" : "descending"}. Sort ${next}.`
+          : `Sort by ${label}`
+      }
       className={cn(
         "group inline-flex items-center gap-1 rounded transition-colors hover:text-ink",
         active && "text-brand-ink",

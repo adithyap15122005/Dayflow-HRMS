@@ -129,3 +129,26 @@ export async function clearSession(): Promise<void> {
   const store = await cookies();
   store.set(SESSION_COOKIE, "", { ...sessionCookieOptions(), maxAge: 0 });
 }
+
+/**
+ * Sign out everywhere.
+ *
+ * Clearing the cookie only stops the *browser* from sending the token; a copy of
+ * it would still verify until it expired. Bumping `sessionVersion` makes every
+ * token already issued for this user fail the check in `getCurrentUser`, which
+ * turns sign-out into real revocation without introducing a session table.
+ */
+export async function revokeSessions(userId: string): Promise<void> {
+  await prisma.user
+    .update({ where: { id: userId }, data: { sessionVersion: { increment: 1 } } })
+    .catch(() => undefined);
+  await clearSession();
+}
+
+/** Sign out the caller, if there is one. Safe to call when already signed out. */
+export async function signOutCurrent(): Promise<void> {
+  const store = await cookies();
+  const claims = await verifySessionToken(store.get(SESSION_COOKIE)?.value);
+  if (claims) await revokeSessions(claims.sub);
+  else await clearSession();
+}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   ChartColumn,
@@ -42,20 +42,22 @@ type Jump = { label: string; href: string; icon: typeof Search; hint: string };
  * can never surface a record they are not allowed to open.
  */
 export function CommandPalette({
-  open,
   onClose,
   role,
 }: {
-  open: boolean;
   onClose: () => void;
   role: Role;
 }) {
   const router = useRouter();
-  const inputRef = useRef<HTMLInputElement>(null);
   const [term, setTerm] = useState("");
-  const [results, setResults] = useState<SearchResult | null>(null);
+  // Results are tagged with the query they belong to, so a stale response is
+  // simply not shown — no effect is needed to clear them.
+  const [fetched, setFetched] = useState<{ term: string; data: SearchResult } | null>(null);
   const [loading, setLoading] = useState(false);
   const [cursor, setCursor] = useState(0);
+
+  const query = term.trim();
+  const results = fetched && fetched.term === query ? fetched.data : null;
 
   const jumps = useMemo<Jump[]>(() => {
     const management = isManagement(role);
@@ -79,44 +81,27 @@ export function CommandPalette({
     return base;
   }, [role]);
 
+  // Debounced search. The effect body itself never calls setState.
   useEffect(() => {
-    if (!open) {
-      setTerm("");
-      setResults(null);
-      setCursor(0);
-      return;
-    }
-    const timer = setTimeout(() => inputRef.current?.focus(), 20);
-    return () => clearTimeout(timer);
-  }, [open]);
-
-  // Debounced search so typing does not flood the API.
-  useEffect(() => {
-    if (!open) return;
-    const query = term.trim();
-    if (query.length < 2) {
-      setResults(null);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+    if (query.length < 2) return;
     const timer = setTimeout(() => {
+      setLoading(true);
       void api
         .get<SearchResult>(`/api/search${qs({ q: query })}`)
-        .then((data) => setResults(data))
-        .catch(() => setResults({ employees: [], leave: [] }))
+        .then((data) => setFetched({ term: query, data }))
+        .catch(() => setFetched({ term: query, data: { employees: [], leave: [] } }))
         .finally(() => setLoading(false));
     }, 220);
     return () => clearTimeout(timer);
-  }, [term, open]);
+  }, [query]);
 
   const filteredJumps = useMemo(() => {
-    const query = term.trim().toLowerCase();
-    if (!query) return jumps;
+    const needle = query.toLowerCase();
+    if (!needle) return jumps;
     return jumps.filter(
-      (j) => j.label.toLowerCase().includes(query) || j.hint.toLowerCase().includes(query),
+      (j) => j.label.toLowerCase().includes(needle) || j.hint.toLowerCase().includes(needle),
     );
-  }, [jumps, term]);
+  }, [jumps, query]);
 
   const flat = useMemo(() => {
     const rows: { href: string; key: string }[] = [];
@@ -126,16 +111,10 @@ export function CommandPalette({
     return rows;
   }, [filteredJumps, results]);
 
-  useEffect(() => {
-    setCursor(0);
-  }, [term]);
-
   function go(href: string) {
     onClose();
     router.push(href);
   }
-
-  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-90">
@@ -172,14 +151,18 @@ export function CommandPalette({
         <div className="flex items-center gap-2.5 border-b border-line px-4">
           <Search className="size-4 shrink-0 text-ink-4" />
           <input
-            ref={inputRef}
+            autoFocus
             value={term}
-            onChange={(e) => setTerm(e.target.value)}
+            onChange={(e) => {
+              setTerm(e.target.value);
+              // Reset the highlight here rather than in an effect.
+              setCursor(0);
+            }}
             placeholder="Search people, leave requests or jump to a page…"
             aria-label="Search"
             className="h-12 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink-4"
           />
-          {loading ? (
+          {loading && query.length >= 2 ? (
             <span className="size-3.5 shrink-0 animate-spin rounded-full border-2 border-brand border-t-transparent" />
           ) : null}
         </div>
@@ -249,14 +232,14 @@ export function CommandPalette({
             </Group>
           ) : null}
 
-          {term.trim().length >= 2 &&
+          {query.length >= 2 &&
           !loading &&
           results &&
           results.employees.length === 0 &&
           results.leave.length === 0 &&
           filteredJumps.length === 0 ? (
             <p className="px-3 py-8 text-center text-[0.8125rem] text-ink-3">
-              Nothing matched “{term.trim()}”. Try a name, employee ID or job title.
+              Nothing matched “{query}”. Try a name, employee ID or job title.
             </p>
           ) : null}
         </div>

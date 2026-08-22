@@ -1,4 +1,4 @@
-import { clearSession, getCurrentUser } from "@/lib/auth/guard";
+import { getCurrentUser, signOutCurrent } from "@/lib/auth/guard";
 import { jsonOk, route } from "@/lib/http";
 
 /** Who am I? Used by the client shell after sign-in and for session probes. */
@@ -22,7 +22,8 @@ export const GET = route(async () => {
   });
 });
 
+/** Sign out, revoking every token issued to this user. */
 export const POST = route(async () => {
-  await clearSession();
+  await signOutCurrent();
   return jsonOk({ ok: true });
 });

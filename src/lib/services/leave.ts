@@ -56,8 +56,9 @@ export type LeaveBalanceRow = {
   entitledDays: number;
   usedDays: number;
   pendingDays: number;
-  remainingDays: number;
   /** Null when the type has no entitlement cap (e.g. unpaid leave). */
+  remainingDays: number | null;
+  /** Null when the type has no entitlement cap. */
   cap: number | null;
 };
 
@@ -66,7 +67,9 @@ export type LeaveBalanceRow = {
  *
  * `remaining = entitled − approved − pending`. Counting pending requests against
  * the balance is what stops an employee from queueing three overlapping requests
- * that would each individually pass validation.
+ * that would each individually pass validation. An uncapped type reports `null`
+ * rather than infinity, so the value stays serialisable and every consumer has to
+ * handle "no limit" explicitly.
  */
 export async function getLeaveBalances(
   employeeId: string,
@@ -107,7 +110,7 @@ export async function getLeaveBalances(
       usedDays,
       pendingDays,
       remainingDays: uncapped
-        ? Number.POSITIVE_INFINITY
+        ? null
         : Math.max(0, Math.round((entitledDays - usedDays - pendingDays) * 10) / 10),
       cap: uncapped ? null : entitledDays,
     };
@@ -169,8 +172,7 @@ export async function submitLeaveRequest(
   ]);
 
   const balance = balances.find((b) => b.leaveTypeId === input.leaveTypeId);
-  const remaining =
-    balance && Number.isFinite(balance.remainingDays) ? balance.remainingDays : null;
+  const remaining = balance?.remainingDays ?? null;
 
   const verdict = validateLeaveRequest(
     { startDate: input.startDate, endDate: input.endDate, halfDay: input.halfDay },

@@ -2,11 +2,11 @@
   "name": "dayflow-hrms",
   "version": "1.0.0",
   "private": true,
-  "description": "Dayflow — the intelligent workforce operations hub. People, attendance, leave, payroll, analytics and HR automation in one product.",
+  "description": "Dayflow \u2014 the intelligent workforce operations hub. People, attendance, leave, payroll, analytics and HR automation in one product.",
   "scripts": {
     "setup": "node scripts/setup.mjs",
-    "dev": "next dev",
-    "build": "prisma generate && next build",
+    "dev": "node scripts/prepare-dist.mjs dev && next dev",
+    "build": "node scripts/prepare-dist.mjs build && prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -15,8 +15,9 @@
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio",
-    "db:reset": "prisma db push --force-reset --accept-data-loss && npm run db:seed",
-    "verify": "npm run typecheck && npm run lint && npm run test"
+    "db:reset": "prisma db push --skip-generate && npm run db:seed",
+    "verify": "npm run typecheck && npm run lint && npm run test",
+    "smoke": "bash scripts/smoke.sh"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -163,9 +163,9 @@ export function EmployeeHomeView({
                       value={balance.usedDays + balance.pendingDays}
                       max={balance.cap ?? 1}
                       tone={
-                        balance.remainingDays <= 1
+                        (balance.remainingDays ?? 0) <= 1
                           ? "danger"
-                          : balance.remainingDays <= 3
+                          : (balance.remainingDays ?? 0) <= 3
                             ? "warning"
                             : "brand"
                       }

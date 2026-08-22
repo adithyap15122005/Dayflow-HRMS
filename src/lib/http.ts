@@ -74,9 +74,9 @@ export function toErrorResponse(error: unknown): NextResponse<ApiErrorBody> {
 
 /** Wrap a route handler so every throw becomes a structured response. */
 export function route<Args extends unknown[]>(
-  handler: (...args: Args) => Promise<NextResponse> | NextResponse,
+  handler: (...args: Args) => Promise<Response> | Response,
 ) {
-  return async (...args: Args): Promise<NextResponse> => {
+  return async (...args: Args): Promise<Response> => {
     try {
       return await handler(...args);
     } catch (error) {

@@ -56,9 +56,12 @@ export function TodayPanel({
   const [busy, setBusy] = useState(false);
   const [tick, setTick] = useState(() => Date.now());
 
-  useEffect(() => {
+  // Adopt a fresh server snapshot (after router.refresh) without an effect.
+  const [seen, setSeen] = useState(initial);
+  if (seen !== initial) {
+    setSeen(initial);
     setState(initial);
-  }, [initial]);
+  }
 
   // Only run a timer while a day is genuinely open.
   useEffect(() => {

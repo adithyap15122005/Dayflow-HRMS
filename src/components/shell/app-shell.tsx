@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ChevronsLeft,
   Command as CommandIcon,
@@ -18,6 +18,7 @@ import { LogoMark, Wordmark } from "@/components/brand/logo";
 import { Avatar } from "@/components/ui/avatar";
 import { useToast } from "@/components/ui/toast";
 import { api } from "@/lib/client/api";
+import { usePersistentFlag } from "@/lib/client/use-persistent-flag";
 import { cn } from "@/lib/cn";
 import { roleLabel } from "@/lib/format";
 import type { Role } from "@/lib/domain/constants";
@@ -57,7 +58,7 @@ export function AppShell({
   const router = useRouter();
   const toast = useToast();
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, toggleCollapsed] = usePersistentFlag(COLLAPSE_KEY);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
@@ -65,22 +66,13 @@ export function AppShell({
   const groups = useMemo(() => navigationFor(user.role), [user.role]);
   const mobileItems = useMemo(() => mobileNavFor(user.role), [user.role]);
 
-  // Restore the collapsed preference after mount so SSR output stays stable.
-  useEffect(() => {
-    setCollapsed(window.localStorage.getItem(COLLAPSE_KEY) === "1");
-  }, []);
-
-  const toggleCollapsed = useCallback(() => {
-    setCollapsed((current) => {
-      window.localStorage.setItem(COLLAPSE_KEY, current ? "0" : "1");
-      return !current;
-    });
-  }, []);
-
-  // Close the mobile drawer whenever navigation happens.
-  useEffect(() => {
+  // Close the mobile drawer on navigation. Adjusting state during render (rather
+  // than in an effect) avoids a second render pass with the drawer still open.
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
     setDrawerOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -402,11 +394,11 @@ export function AppShell({
         </ul>
       </nav>
 
-      <CommandPalette
-        open={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
-        role={user.role}
-      />
+      {/* The palette mounts only while open, so its state starts fresh each time
+          instead of needing an effect to reset it. */}
+      {paletteOpen ? (
+        <CommandPalette onClose={() => setPaletteOpen(false)} role={user.role} />
+      ) : null}
 
       {/* Floating entry point to the assistant — the product's signature action. */}
       <Link

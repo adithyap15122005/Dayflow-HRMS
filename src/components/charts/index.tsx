@@ -214,7 +214,7 @@ export function HorizontalBarChart({
   unit = "",
   tone = "present",
   height = 220,
-  formatValue,
+  valueLabel,
 }: {
   data: Record<string, string | number>[];
   valueKey: string;
@@ -222,7 +222,8 @@ export function HorizontalBarChart({
   unit?: string;
   tone?: "present" | "absent" | "leave" | "late";
   height?: number;
-  formatValue?: (value: number) => string;
+  /** Suffix shown in the tooltip, e.g. "people" or "of expected days". */
+  valueLabel?: string;
 }) {
   return (
     <ChartFrame height={height}>
@@ -244,7 +245,7 @@ export function HorizontalBarChart({
         <Tooltip
           {...TOOLTIP_STYLE}
           formatter={(value) => [
-            formatValue ? formatValue(Number(value)) : `${value}${unit}`,
+            `${value}${unit}${valueLabel ? ` ${valueLabel}` : ""}`,
             "",
           ]}
         />
