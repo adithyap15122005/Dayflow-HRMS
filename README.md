@@ -15,6 +15,11 @@
 
 </div>
 
+> ## 🚀 Live AWS Demo
+>
+> **[OPEN DAYFLOW HRMS ON AWS →](https://13-205-86-226.sslip.io)**<br>
+> **Public HTTPS deployment · Ready for evaluator access**
+
 ---
 
 Dayflow is a production-ready Human Resource Management System built around one
@@ -42,6 +47,8 @@ workflows into one coherent application.
 The latest verified build is deployed on AWS:
 
 ### [https://13-205-86-226.sslip.io](https://13-205-86-226.sslip.io)
+
+**➡️ [OPEN THE LIVE AWS APPLICATION](https://13-205-86-226.sslip.io)**
 
 Use the one-click demo roles on the sign-in page to experience the same workflow
 as an administrator, HR officer or employee. The deployment uses seeded showcase
@@ -320,7 +327,9 @@ npm run db:studio  # browse the data
 
 ## Recommended review path (about four minutes)
 
-1. Sign in as **Administrator** from the one-click button.
+**Start here: [Launch the AWS deployment](https://13-205-86-226.sslip.io)**
+
+1. Open the live AWS application and sign in as **Administrator** from the one-click button.
 2. Read the **attention queue** — note that each row names its rule.
 3. Ask Dayflow *"Who is absent today?"* and look at the tables it cites.
 4. **Attendance** → change the date, then correct someone's record.
@@ -380,7 +389,7 @@ This architecture keeps the hackathon deployment inexpensive and easy to operate
 For horizontal scaling, the application can move to PostgreSQL and external
 session/rate-limit storage without changing its domain or service boundaries.
 
-**Production URL:** [https://13-205-86-226.sslip.io](https://13-205-86-226.sslip.io)
+**🚀 PRODUCTION URL: [https://13-205-86-226.sslip.io](https://13-205-86-226.sslip.io)**
 
 ---
 
