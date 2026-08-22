@@ -54,6 +54,10 @@ Use the one-click demo roles on the sign-in page to experience the same workflow
 as an administrator, HR officer or employee. The deployment uses seeded showcase
 data, so judges can safely explore approvals, attendance, reports and payroll.
 
+> **Live Demo:** [https://13-205-86-226.sslip.io](https://13-205-86-226.sslip.io) — Deployed on AWS  
+> **Repository:** [https://github.com/adithyap15122005/Dayflow-HRMS](https://github.com/adithyap15122005/Dayflow-HRMS)  
+> **Maintainer:** [@adithyap15122005](https://github.com/adithyap15122005)
+
 ---
 
 ## Quick start
